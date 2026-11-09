@@ -1,0 +1,617 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#146c5a">
+  <title>Asisten Jasa</title>
+  <style>
+    :root {
+      --primary: #146c5a;
+      --primary-dark: #0b493d;
+      --accent: #e9b949;
+      --bg: #f3f7f5;
+      --card: #fff;
+      --text: #17221f;
+      --muted: #64716c;
+      --border: #dce7e2;
+      --danger: #bf3434;
+      --shadow: 0 8px 25px #163c2b12;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; color: var(--text); background: var(--bg);
+      font-family: system-ui, -apple-system, Segoe UI, sans-serif;
+    }
+    header {
+      background: linear-gradient(120deg, var(--primary-dark), var(--primary));
+      color: #fff; padding: 16px max(18px, calc((100% - 1180px)/2));
+      display: flex; align-items: center; justify-content: space-between; gap: 16px;
+      position: sticky; top: 0; z-index: 5; box-shadow: var(--shadow);
+    }
+    .brand { font-size: 20px; font-weight: 800; }
+    .clock { text-align: right; font-size: 13px; line-height: 1.5; }
+    main { max-width: 1180px; margin: 24px auto; padding: 0 16px 50px; }
+    .tabs { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 18px; }
+    button, .button {
+      border: 0; border-radius: 10px; padding: 10px 14px;
+      font: inherit; font-weight: 700; cursor: pointer;
+    }
+    button:disabled { opacity: .55; cursor: not-allowed; }
+    .tab { background: #e4ede8; color: var(--primary-dark); }
+    .tab.active, .primary { background: var(--primary); color: #fff; }
+    .secondary { background: #e8efeb; color: var(--primary-dark); }
+    .danger { background: #fde8e8; color: var(--danger); }
+    .small { padding: 7px 10px; font-size: 13px; }
+    .panel {
+      background: var(--card); border: 1px solid var(--border); border-radius: 16px;
+      padding: 20px; box-shadow: var(--shadow); margin-bottom: 18px;
+    }
+    h1, h2, h3 { margin: 0 0 14px; }
+    h1 { font-size: 25px; }
+    h2 { font-size: 19px; }
+    h3 { font-size: 16px; }
+    p { color: var(--muted); }
+    .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+    .full { grid-column: 1 / -1; }
+    label { display: block; font-size: 13px; font-weight: 700; margin-bottom: 6px; }
+    input, textarea, select {
+      width: 100%; border: 1px solid var(--border); background: #fff;
+      border-radius: 9px; padding: 11px 12px; font: inherit; color: var(--text);
+    }
+    textarea { min-height: 82px; resize: vertical; }
+    .hint { font-size: 12px; color: var(--muted); margin-top: 5px; }
+    .row { display: flex; flex-wrap: wrap; gap: 9px; align-items: center; }
+    .notice {
+      padding: 12px 14px; background: #fff7dc; border: 1px solid #f0df9f;
+      border-radius: 10px; margin: 12px 0; color: #5d4b13;
+    }
+    .info-item { padding: 12px 0; border-bottom: 1px solid var(--border); }
+    .info-item:last-child { border: 0; }
+    .muted { color: var(--muted); font-size: 13px; }
+    .total {
+      padding: 15px; background: #edf7f2; border: 1px solid #cce4d7;
+      border-radius: 12px; font-size: 18px; font-weight: 800;
+    }
+    .table-wrap { overflow-x: auto; }
+    table { border-collapse: collapse; width: 100%; min-width: 920px; }
+    th, td { padding: 10px; border-bottom: 1px solid var(--border); text-align: left; vertical-align: top; }
+    th { font-size: 12px; color: var(--muted); background: #f7faf8; }
+    .badge { display: inline-block; border-radius: 99px; padding: 5px 9px; background: #e8efeb; font-size: 12px; }
+    .hidden { display: none !important; }
+    .settings-line { display: grid; grid-template-columns: 1fr 180px auto; gap: 10px; align-items: end; margin: 12px 0; }
+    .footer { text-align: center; color: var(--muted); font-size: 12px; margin-top: 22px; }
+    @media(max-width: 650px) {
+      header { align-items: flex-start; }
+      .clock { font-size: 11px; }
+      .grid { grid-template-columns: 1fr; }
+      .full { grid-column: auto; }
+      .settings-line { grid-template-columns: 1fr; }
+      .panel { padding: 16px; }
+    }
+  </style>
+</head>
+<body>
+<header>
+  <div class="brand">🧰 Asisten Jasa</div>
+  <div class="clock" id="clock">Memuat waktu…</div>
+</header>
+
+<main>
+  <nav class="tabs">
+    <button class="tab active" data-view="customer">Dashboard Customer</button>
+    <button class="tab" data-view="admin">Dashboard Admin</button>
+    <button class="tab" data-view="history">History Pesanan</button>
+  </nav>
+
+  <section id="customerView">
+    <div class="panel">
+      <h1>Pesan layanan</h1>
+      <p>Isi data pesanan dan izinkan akses lokasi untuk menghitung estimasi biaya.</p>
+      <div class="notice"><strong>Lokasi wajib:</strong> tekan tombol lokasi dan izinkan akses GPS pada browser.</div>
+
+      <form id="orderForm">
+        <div class="grid">
+          <div>
+            <label for="customerName">Nama lengkap</label>
+            <input id="customerName" required autocomplete="name">
+          </div>
+          <div>
+            <label for="customerPhone">Nomor WhatsApp</label>
+            <input id="customerPhone" required inputmode="tel" placeholder="Contoh: 081234567890">
+          </div>
+          <div class="full">
+            <label for="address">Alamat lengkap</label>
+            <textarea id="address" required autocomplete="street-address"></textarea>
+          </div>
+          <div>
+            <label for="pickup">Lokasi penjemputan</label>
+            <input id="pickup" required placeholder="Alamat atau patokan penjemputan">
+          </div>
+          <div>
+            <label for="destination">Lokasi tujuan</label>
+            <input id="destination" required placeholder="Alamat atau patokan tujuan">
+          </div>
+          <div class="full">
+            <label>Lokasi otomatis (GPS) — wajib</label>
+            <div class="row">
+              <button type="button" id="getLocation" class="secondary">📍 Ambil lokasi saya</button>
+              <span id="locationText" class="muted">Belum diambil</span>
+            </div>
+          </div>
+          <div class="full">
+            <label for="notes">Deskripsi / catatan</label>
+            <textarea id="notes" placeholder="Tuliskan detail kebutuhan jasa"></textarea>
+          </div>
+          <div class="full">
+            <div class="total" id="estimate">Estimasi total: —</div>
+            <div class="hint">Estimasi berdasarkan GPS ke tujuan memakai tarif admin. Jarak jalan sebenarnya dapat berbeda.</div>
+          </div>
+          <div class="full">
+            <button class="primary" type="submit">Buat pesanan & review struk</button>
+          </div>
+        </div>
+      </form>
+    </div>
+    <div class="panel">
+      <h2>🔔 Informasi dari admin</h2>
+      <div id="customerAnnouncements" class="muted">Belum ada informasi.</div>
+    </div>
+    <div class="panel hidden" id="receiptPanel">
+      <h2>Review struk pesanan</h2>
+      <div id="receiptContent"></div>
+      <div class="row" style="margin-top:14px">
+        <button id="printReceipt" class="secondary">🖨️ Cetak struk</button>
+        <button id="sendWhatsApp" class="primary">Kirim melalui WhatsApp</button>
+      </div>
+    </div>
+  </section>
+
+  <section id="adminView" class="hidden">
+    <div class="panel" id="registerPanel">
+      <h1>Daftar akun admin</h1>
+      <p>Akun ini tersimpan hanya di browser/perangkat yang digunakan.</p>
+      <form id="registerForm" class="grid">
+        <div><label>Nama lengkap</label><input id="regName" required></div>
+        <div><label>Nomor handphone</label><input id="regPhone" required inputmode="tel"></div>
+        <div><label>Kata sandi</label><input id="regPassword" type="password" required minlength="6"></div>
+        <div><label>Kata sandi khusus / kode rahasia</label><input id="regSecret" type="password" required minlength="4"></div>
+        <div class="full"><button class="primary">Daftar admin</button></div>
+      </form>
+    </div>
+
+    <div class="panel hidden" id="loginPanel">
+      <h2>Login admin</h2>
+      <form id="loginForm" class="grid">
+        <div><label>Nomor handphone</label><input id="loginPhone" required inputmode="tel"></div>
+        <div><label>Kata sandi</label><input id="loginPassword" type="password" required></div>
+        <div class="full"><button class="primary">Login</button></div>
+      </form>
+      <p class="hint">Kode rahasia dipakai saat membuat akun; prototipe ini belum memiliki pemulihan kata sandi.</p>
+    </div>
+
+    <div class="panel hidden" id="adminDashboard">
+      <div class="row" style="justify-content:space-between">
+        <h1>Dashboard Admin</h1><button id="logout" class="secondary">Keluar</button>
+      </div>
+      <p id="adminWelcome"></p>
+
+      <h2>Siarkan informasi</h2>
+      <form id="announcementForm" class="grid">
+        <div class="full"><label>Isi informasi</label><textarea id="announcementText" required></textarea></div>
+        <div><label>Atur informasi</label>
+          <select id="announcementAction">
+            <option value="add">Tambah informasi baru</option>
+            <option value="edit">Edit informasi terakhir</option>
+          </select>
+        </div>
+        <div class="row">
+          <button class="primary">Simpan informasi</button>
+          <button type="button" id="deleteAnnouncement" class="danger">Hapus informasi terakhir</button>
+        </div>
+      </form>
+
+      <hr style="border:0;border-top:1px solid var(--border);margin:22px 0">
+      <h2>Pengaturan tarif (Rp)</h2>
+      <p class="muted">Tarif awal admin ke customer, tarif customer ke tujuan, dan biaya setiap kilometer berikutnya.</p>
+      <div class="settings-line">
+        <label>Tarif dasar admin ke customer</label>
+        <input id="rateAdmin" type="number" min="0">
+        <button class="primary save-rate" data-rate="admin">Simpan</button>
+      </div>
+      <div class="settings-line">
+        <label>Tarif dasar customer ke tujuan</label>
+        <input id="rateDestination" type="number" min="0">
+        <button class="primary save-rate" data-rate="destination">Simpan</button>
+      </div>
+      <div class="settings-line">
+        <label>Tarif per kilometer berikutnya</label>
+        <input id="rateKm" type="number" min="0">
+        <button class="primary save-rate" data-rate="km">Simpan</button>
+      </div>
+
+      <hr style="border:0;border-top:1px solid var(--border);margin:22px 0">
+      <h2>Lokasi admin</h2>
+      <p class="muted">Opsional untuk tarif berbasis jarak admin ke customer. Jika tidak diatur, tarif dasar admin tetap dikenakan.</p>
+      <div class="row">
+        <button id="adminLocationButton" class="secondary">📍 Ambil lokasi admin</button>
+        <span id="adminLocationText" class="muted"></span>
+      </div>
+
+      <hr style="border:0;border-top:1px solid var(--border);margin:22px 0">
+      <h2>Tampilan</h2>
+      <div class="grid">
+        <div><label>Warna latar belakang</label><input id="bgColor" type="color" value="#f3f7f5"></div>
+        <div><label>Warna utama</label><input id="primaryColor" type="color" value="#146c5a"></div>
+        <div class="full row">
+          <button id="saveColors" class="primary">Simpan warna</button>
+          <button id="autoColors" class="secondary">Aktifkan warna otomatis</button>
+        </div>
+      </div>
+      <p class="hint">Perubahan warna disimpan pada browser ini. Warna otomatis berganti secara berkala.</p>
+    </div>
+  </section>
+
+  <section id="historyView" class="hidden">
+    <div class="panel">
+      <h1>History pesanan</h1>
+      <p class="muted">Admin dapat memperbarui status dan membuka struk atau WhatsApp customer.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>No.</th><th>Nama</th><th>WhatsApp</th><th>Waktu</th>
+              <th>Penjemputan → Tujuan</th><th>Total</th><th>Status pesanan</th><th>Aksi</th>
+            </tr>
+          </thead>
+          <tbody id="historyBody"></tbody>
+        </table>
+      </div>
+      <div id="emptyHistory" class="muted">Belum ada pesanan.</div>
+    </div>
+  </section>
+
+  <div class="footer">Asisten Jasa — prototipe HTML satu file</div>
+</main>
+
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  const read = (key, fallback) => {
+    try { return JSON.parse(localStorage.getItem(key)) ?? fallback; }
+    catch { return fallback; }
+  };
+  const write = (key, value) => localStorage.setItem(key, JSON.stringify(value));
+  const rupiah = n => new Intl.NumberFormat("id-ID", {
+    style: "currency", currency: "IDR", maximumFractionDigits: 0
+  }).format(Number(n) || 0);
+  const escapeHtml = value => String(value ?? "").replace(/[&<>"']/g, c => ({
+    "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;"
+  }[c]));
+
+  let customerLocation = null;
+  let adminLocation = read("aj_admin_location", null);
+  let latestOrderId = null;
+  let autoColorTimer = null;
+
+  const rates = () => read("aj_rates", {admin: 5000, destination: 5000, km: 2000});
+  const orders = () => read("aj_orders", []);
+  const admin = () => read("aj_admin", null);
+
+  function updateClock() {
+    const now = new Date();
+    $("clock").textContent = now.toLocaleDateString("id-ID", {
+      weekday: "long", day: "2-digit", month: "long", year: "numeric"
+    }) + " · " + now.toLocaleTimeString("id-ID", {
+      hour: "2-digit", minute: "2-digit", second: "2-digit"
+    });
+  }
+  updateClock();
+  setInterval(updateClock, 1000);
+
+  document.querySelectorAll(".tab").forEach(btn => btn.addEventListener("click", () => {
+    document.querySelectorAll(".tab").forEach(b => b.classList.toggle("active", b === btn));
+    ["customer", "admin", "history"].forEach(view =>
+      $(view + "View").classList.toggle("hidden", view !== btn.dataset.view)
+    );
+    if (btn.dataset.view === "admin") renderAdmin();
+    if (btn.dataset.view === "history") renderHistory();
+  }));
+
+  function getPosition(callback, errorCallback) {
+    if (!navigator.geolocation) return errorCallback("Browser tidak mendukung GPS.");
+    navigator.geolocation.getCurrentPosition(
+      pos => callback({lat: pos.coords.latitude, lon: pos.coords.longitude}),
+      err => errorCallback("Lokasi tidak tersedia. Izinkan akses lokasi dan coba lagi."),
+      {enableHighAccuracy: true, timeout: 15000, maximumAge: 0}
+    );
+  }
+  const radians = n => n * Math.PI / 180;
+  function distanceKm(a, b) {
+    const dLat = radians(b.lat - a.lat), dLon = radians(b.lon - a.lon);
+    const x = Math.sin(dLat/2)**2 +
+      Math.cos(radians(a.lat)) * Math.cos(radians(b.lat)) * Math.sin(dLon/2)**2;
+    return 6371 * 2 * Math.atan2(Math.sqrt(x), Math.sqrt(1-x));
+  }
+  function calculateTotal() {
+    if (!customerLocation) return null;
+    const r = rates();
+    const destinationKm = 1; // Jarak GPS tujuan tidak dapat dihitung dari teks alamat saja.
+    let adminKm = 0;
+    if (adminLocation) adminKm = distanceKm(adminLocation, customerLocation);
+    const adminCost = Number(r.admin) + Math.ceil(Math.max(0, adminKm - 1)) * Number(r.km);
+    const destinationCost = Number(r.destination) +
+      Math.ceil(Math.max(0, destinationKm - 1)) * Number(r.km);
+    return {total: adminCost + destinationCost, adminKm, destinationKm};
+  }
+  function updateEstimate() {
+    const result = calculateTotal();
+    $("estimate").textContent = result
+      ? `Estimasi total: ${rupiah(result.total)}`
+      : "Estimasi total: ambil lokasi GPS terlebih dahulu";
+  }
+
+  $("getLocation").addEventListener("click", () => {
+    $("locationText").textContent = "Mengambil lokasi…";
+    getPosition(pos => {
+      customerLocation = pos;
+      $("locationText").textContent = `${pos.lat.toFixed(5)}, ${pos.lon.toFixed(5)} ✓`;
+      updateEstimate();
+    }, message => {
+      $("locationText").textContent = message;
+      alert(message);
+    });
+  });
+
+  $("orderForm").addEventListener("submit", event => {
+    event.preventDefault();
+    if (!customerLocation) return alert("Lokasi GPS wajib diambil sebelum membuat pesanan.");
+    const cost = calculateTotal();
+    const order = {
+      id: Date.now(),
+      name: $("customerName").value.trim(),
+      phone: $("customerPhone").value.trim(),
+      address: $("address").value.trim(),
+      pickup: $("pickup").value.trim(),
+      destination: $("destination").value.trim(),
+      notes: $("notes").value.trim(),
+      location: customerLocation,
+      adminKm: cost.adminKm,
+      destinationKm: cost.destinationKm,
+      total: cost.total,
+      status: "Diterima",
+      time: new Date().toISOString()
+    };
+    const list = orders();
+    list.unshift(order);
+    write("aj_orders", list);
+    latestOrderId = order.id;
+    renderReceipt(order);
+    $("receiptPanel").classList.remove("hidden");
+    renderHistory();
+    $("receiptPanel").scrollIntoView({behavior:"smooth"});
+  });
+
+  function renderReceipt(order) {
+    $("receiptContent").innerHTML = `
+      <div class="info-item"><strong>No. pesanan:</strong> ${escapeHtml(order.id)}</div>
+      <div class="info-item"><strong>Nama:</strong> ${escapeHtml(order.name)}</div>
+      <div class="info-item"><strong>WhatsApp:</strong> ${escapeHtml(order.phone)}</div>
+      <div class="info-item"><strong>Alamat:</strong> ${escapeHtml(order.address)}</div>
+      <div class="info-item"><strong>Penjemputan:</strong> ${escapeHtml(order.pickup)}</div>
+      <div class="info-item"><strong>Tujuan:</strong> ${escapeHtml(order.destination)}</div>
+      <div class="info-item"><strong>Waktu:</strong> ${new Date(order.time).toLocaleString("id-ID")}</div>
+      <div class="info-item"><strong>Status:</strong> ${escapeHtml(order.status)}</div>
+      <div class="info-item"><strong>Catatan:</strong> ${escapeHtml(order.notes || "-")}</div>
+      <div class="total">Total yang harus dibayar: ${rupiah(order.total)}</div>
+      <p class="hint">Perhitungan estimasi memakai tarif yang disetel admin. Konfirmasi biaya akhir dengan admin.</p>`;
+  }
+  $("printReceipt").addEventListener("click", () => window.print());
+  $("sendWhatsApp").addEventListener("click", () => {
+    const order = orders().find(o => o.id === latestOrderId);
+    if (order) sendWhatsApp(order);
+  });
+  function sendWhatsApp(order) {
+    let phone = String(order.phone).replace(/\D/g, "");
+    if (phone.startsWith("0")) phone = "62" + phone.slice(1);
+    const message = `Halo ${order.name}, pesanan jasa Anda telah diterima.
+No. pesanan: ${order.id}
+Penjemputan: ${order.pickup}
+Tujuan: ${order.destination}
+Status: ${order.status}
+Total estimasi: ${rupiah(order.total)}
+Terima kasih.`;
+    window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, "_blank");
+  }
+
+  function renderAnnouncements() {
+    const list = read("aj_announcements", []);
+    $("customerAnnouncements").innerHTML = list.length
+      ? list.map(item => `<div class="info-item"><strong>${escapeHtml(item.date)}</strong><br>${escapeHtml(item.text)}</div>`).join("")
+      : "Belum ada informasi.";
+  }
+  renderAnnouncements();
+
+  function renderAdmin() {
+    const a = admin();
+    $("registerPanel").classList.toggle("hidden", !!a);
+    $("loginPanel").classList.toggle("hidden", !a || sessionStorage.getItem("aj_logged") === "yes");
+    $("adminDashboard").classList.toggle("hidden", !a || sessionStorage.getItem("aj_logged") !== "yes");
+    if (a) $("adminWelcome").textContent = `Login sebagai ${a.name} (${a.phone})`;
+    const r = rates();
+    $("rateAdmin").value = r.admin;
+    $("rateDestination").value = r.destination;
+    $("rateKm").value = r.km;
+    $("adminLocationText").textContent = adminLocation
+      ? `${adminLocation.lat.toFixed(5)}, ${adminLocation.lon.toFixed(5)}`
+      : "Lokasi admin belum diatur";
+    const colors = read("aj_colors", null);
+    if (colors) {
+      $("bgColor").value = colors.bg;
+      $("primaryColor").value = colors.primary;
+    }
+  }
+
+  $("registerForm").addEventListener("submit", event => {
+    event.preventDefault();
+    if (admin()) return alert("Akun admin sudah terdaftar di browser ini.");
+    write("aj_admin", {
+      name: $("regName").value.trim(),
+      phone: $("regPhone").value.trim(),
+      password: $("regPassword").value,
+      secret: $("regSecret").value
+    });
+    alert("Pendaftaran tersimpan. Silakan login.");
+    renderAdmin();
+  });
+  $("loginForm").addEventListener("submit", event => {
+    event.preventDefault();
+    const a = admin();
+    if (a && $("loginPhone").value.trim() === a.phone &&
+        $("loginPassword").value === a.password) {
+      sessionStorage.setItem("aj_logged", "yes");
+      renderAdmin();
+    } else alert("Nomor handphone atau kata sandi salah.");
+  });
+  $("logout").addEventListener("click", () => {
+    sessionStorage.removeItem("aj_logged");
+    renderAdmin();
+  });
+
+  document.querySelectorAll(".save-rate").forEach(button => button.addEventListener("click", () => {
+    const r = rates();
+    const key = button.dataset.rate;
+    const input = {admin: "rateAdmin", destination: "rateDestination", km: "rateKm"}[key];
+    r[key] = Math.max(0, Number($(input).value) || 0);
+    write("aj_rates", r);
+    updateEstimate();
+    alert("Tarif berhasil disimpan.");
+  }));
+
+  $("adminLocationButton").addEventListener("click", () => {
+    $("adminLocationText").textContent = "Mengambil lokasi…";
+    getPosition(pos => {
+      adminLocation = pos;
+      write("aj_admin_location", pos);
+      renderAdmin();
+      updateEstimate();
+    }, message => alert(message));
+  });
+
+  $("announcementForm").addEventListener("submit", event => {
+    event.preventDefault();
+    const text = $("announcementText").value.trim();
+    const list = read("aj_announcements", []);
+    if ($("announcementAction").value === "edit" && list.length) {
+      list[0] = {text, date: new Date().toLocaleString("id-ID")};
+    } else {
+      list.unshift({text, date: new Date().toLocaleString("id-ID")});
+    }
+    write("aj_announcements", list);
+    $("announcementText").value = "";
+    renderAnnouncements();
+    alert("Informasi disimpan.");
+  });
+  $("deleteAnnouncement").addEventListener("click", () => {
+    const list = read("aj_announcements", []);
+    if (!list.length) return alert("Belum ada informasi.");
+    list.shift();
+    write("aj_announcements", list);
+    renderAnnouncements();
+  });
+
+  function setColors(bg, primary) {
+    document.documentElement.style.setProperty("--bg", bg);
+    document.documentElement.style.setProperty("--primary", primary);
+    const colors = {bg, primary};
+    write("aj_colors", colors);
+    $("bgColor").value = bg;
+    $("primaryColor").value = primary;
+  }
+  $("saveColors").addEventListener("click", () => {
+    clearInterval(autoColorTimer);
+    autoColorTimer = null;
+    setColors($("bgColor").value, $("primaryColor").value);
+  });
+  $("autoColors").addEventListener("click", () => {
+    clearInterval(autoColorTimer);
+    const palettes = [
+      ["#f3f7f5", "#146c5a"], ["#f4f2ff", "#6246a8"],
+      ["#fff5ed", "#c45a24"], ["#eef5ff", "#2864a5"],
+      ["#fff2f5", "#a6325c"]
+    ];
+    let index = 0;
+    autoColorTimer = setInterval(() => {
+      setColors(...palettes[index++ % palettes.length]);
+    }, 5000);
+    alert("Warna otomatis aktif selama halaman ini terbuka.");
+  });
+  const savedColors = read("aj_colors", null);
+  if (savedColors) setColors(savedColors.bg, savedColors.primary);
+
+  function renderHistory() {
+    const list = orders();
+    $("emptyHistory").classList.toggle("hidden", list.length > 0);
+    $("historyBody").innerHTML = list.map((o, i) => `
+      <tr>
+        <td>${i + 1}</td>
+        <td>${escapeHtml(o.name)}</td>
+        <td>${escapeHtml(o.phone)}</td>
+        <td>${new Date(o.time).toLocaleString("id-ID")}</td>
+        <td>${escapeHtml(o.pickup)} → ${escapeHtml(o.destination)}</td>
+        <td>${rupiah(o.total)}</td>
+        <td>
+          <select data-status="${o.id}" aria-label="Status pesanan">
+            ${["Diterima","Sedang dalam proses","Selesai"].map(s =>
+              `<option ${o.status === s ? "selected" : ""}>${s}</option>`).join("")}
+          </select>
+        </td>
+        <td>
+          <div class="row">
+            <button class="secondary small" data-receipt="${o.id}">Review struk</button>
+            <button class="secondary small" data-print="${o.id}">Cetak struk</button>
+            <button class="primary small" data-wa="${o.id}">WhatsApp</button>
+          </div>
+        </td>
+      </tr>`).join("");
+
+    document.querySelectorAll("[data-status]").forEach(select =>
+      select.addEventListener("change", () => {
+        const all = orders();
+        const order = all.find(o => o.id === Number(select.dataset.status));
+        if (order) {
+          order.status = select.value;
+          write("aj_orders", all);
+          if (latestOrderId === order.id) renderReceipt(order);
+        }
+      })
+    );
+    document.querySelectorAll("[data-receipt]").forEach(button =>
+      button.addEventListener("click", () => {
+        const order = orders().find(o => o.id === Number(button.dataset.receipt));
+        if (!order) return;
+        latestOrderId = order.id;
+        renderReceipt(order);
+        $("receiptPanel").classList.remove("hidden");
+        document.querySelector('[data-view="customer"]').click();
+        $("receiptPanel").scrollIntoView({behavior:"smooth"});
+      })
+    );
+    document.querySelectorAll("[data-print]").forEach(button =>
+      button.addEventListener("click", () => {
+        const order = orders().find(o => o.id === Number(button.dataset.print));
+        if (order) { latestOrderId = order.id; renderReceipt(order); $("receiptPanel").classList.remove("hidden"); window.print(); }
+      })
+    );
+    document.querySelectorAll("[data-wa]").forEach(button =>
+      button.addEventListener("click", () => {
+        const order = orders().find(o => o.id === Number(button.dataset.wa));
+        if (order) sendWhatsApp(order);
+      })
+    );
+  }
+  renderHistory();
+})();
+</script>
+</body>
+</html>
