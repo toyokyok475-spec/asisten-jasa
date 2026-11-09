@@ -129,7 +129,7 @@
       box-shadow: var(--shadow);
     }
 
-    h1, h2, h3 { margin: 0 0 14px; }
+    h1, h2 { margin: 0 0 14px; }
     h1 { font-size: 25px; }
     h2 { font-size: 19px; }
     p { color: var(--muted); }
@@ -171,7 +171,6 @@
       font-size: 12px;
     }
 
-    .hint { margin-top: 5px; }
     .muted { font-size: 13px; }
 
     .row {
@@ -293,15 +292,13 @@
 
 <div id="announcementPopover" class="announcement-popover hidden">
   <strong>Informasi dari admin</strong>
-  <div id="customerAnnouncements" class="announcement-list muted">
-    Belum ada informasi.
-  </div>
+  <div id="customerAnnouncements" class="muted">Belum ada informasi.</div>
 </div>
 
 <main>
   <nav class="tabs">
     <button class="tab active" data-view="customer">Dashboard Customer</button>
-    <button class="tab" data-view="admin">Dashboard Admin</button>
+    <button class="tab" data-view="admin">Daftar / Login Admin</button>
   </nav>
 
   <!-- DASHBOARD CUSTOMER -->
@@ -312,7 +309,7 @@
 
       <div class="notice">
         <strong>Lokasi wajib:</strong> isi alamat/patokan dan ambil titik GPS
-        untuk penjemputan serta tujuan.
+        penjemputan serta tujuan.
       </div>
 
       <form id="orderForm">
@@ -337,14 +334,12 @@
             <label for="pickup">Alamat atau patokan penjemputan</label>
             <input id="pickup" required
                    placeholder="Contoh: Jl. Melati No. 10, rumah pagar hitam">
-
             <div class="row" style="margin-top:8px">
               <button type="button" id="getPickupLocation" class="secondary">
                 📍 Ambil lokasi penjemputan di peta
               </button>
               <span id="pickupLocationText" class="muted">Lokasi belum dipilih</span>
             </div>
-
             <iframe id="pickupMap" class="location-map hidden"
                     title="Peta lokasi penjemputan"
                     loading="lazy"
@@ -355,14 +350,12 @@
             <label for="destination">Alamat atau patokan tujuan</label>
             <input id="destination" required
                    placeholder="Contoh: Kantor ABC, Jl. Mawar No. 5">
-
             <div class="row" style="margin-top:8px">
               <button type="button" id="getDestinationLocation" class="secondary">
                 📍 Ambil lokasi tujuan di peta
               </button>
               <span id="destinationLocationText" class="muted">Lokasi belum dipilih</span>
             </div>
-
             <iframe id="destinationMap" class="location-map hidden"
                     title="Peta lokasi tujuan"
                     loading="lazy"
@@ -402,11 +395,13 @@
     </div>
   </section>
 
-  <!-- DASHBOARD ADMIN -->
+  <!-- PANEL DAFTAR ADMIN -->
   <section id="adminView" class="hidden">
     <div class="panel" id="registerPanel">
       <h1>Daftar akun admin</h1>
-      <p>Setelah berhasil daftar, silakan masuk menggunakan nama dan kata sandi.</p>
+      <p>
+        Setelah pendaftaran berhasil, halaman akan beralih ke form login.
+      </p>
 
       <form id="registerForm" class="grid">
         <div>
@@ -437,8 +432,10 @@
       </form>
     </div>
 
+    <!-- PANEL LOGIN ADMIN -->
     <div class="panel hidden" id="loginPanel">
-      <h2>Login admin</h2>
+      <h1>Login admin</h1>
+      <p>Masukkan nama dan kata sandi yang didaftarkan.</p>
 
       <form id="loginForm" class="grid">
         <div>
@@ -458,6 +455,7 @@
       </form>
     </div>
 
+    <!-- DASHBOARD ADMIN, tampil setelah login -->
     <div class="panel hidden" id="adminDashboard">
       <div class="row" style="justify-content:space-between">
         <h1>Dashboard Admin</h1>
@@ -493,7 +491,7 @@
 
       <h2>Pengaturan tarif (Rp)</h2>
       <p class="muted">
-        Atur tarif dasar, lalu tekan tombol Simpan pada tiap tarif.
+        Tarif disimpan pada browser yang digunakan.
       </p>
 
       <div class="settings-line">
@@ -518,7 +516,7 @@
 
       <h2>Lokasi admin</h2>
       <p class="muted">
-        Opsional. Jika diatur, jarak admin ke penjemputan ikut dihitung.
+        Opsional. Jika diatur, jarak admin ke lokasi penjemputan ikut dihitung.
       </p>
 
       <div class="row">
@@ -553,9 +551,7 @@
       <hr style="border:0;border-top:1px solid var(--border);margin:22px 0">
 
       <h2>History Pesanan</h2>
-      <p class="muted">
-        Perbarui status, review atau cetak struk, dan hubungi WhatsApp admin.
-      </p>
+      <p class="muted">Kelola status, struk, dan pesan pesanan.</p>
 
       <div class="table-wrap">
         <table>
@@ -584,7 +580,7 @@
 
 <script>
 (() => {
-  // Kode demo. Rahasia di JavaScript frontend dapat dilihat pengguna.
+  // Kode demo. Validasi rahasia dan akun produksi sebaiknya dilakukan di backend.
   const DEFAULT_SECRET_REGISTRATION = "476";
   const MAIN_WA_NUMBER = "628991286742";
 
@@ -598,8 +594,9 @@
     }
   };
 
-  const write = (key, value) =>
+  const write = (key, value) => {
     localStorage.setItem(key, JSON.stringify(value));
+  };
 
   const rupiah = amount =>
     new Intl.NumberFormat("id-ID", {
@@ -624,12 +621,16 @@
   let autoColorTimer = null;
 
   const rates = () =>
-    read("aj_rates", { admin: 5000, destination: 5000, km: 2000 });
+    read("aj_rates", {
+      admin: 5000,
+      destination: 5000,
+      km: 2000
+    });
 
   const orders = () => read("aj_orders", []);
   const admin = () => read("aj_admin", null);
 
-  // Tanggal dan jam real-time.
+  // Jam, tanggal, bulan, dan tahun.
   function updateClock() {
     const now = new Date();
 
@@ -652,7 +653,7 @@
   updateClock();
   setInterval(updateClock, 1000);
 
-  // Navigasi.
+  // Navigasi customer/admin.
   document.querySelectorAll(".tab").forEach(button => {
     button.addEventListener("click", () => {
       document.querySelectorAll(".tab").forEach(tab => {
@@ -673,7 +674,7 @@
     });
   });
 
-  // Ambil lokasi GPS. Memerlukan HTTPS atau localhost.
+  // GPS memerlukan HTTPS atau localhost.
   function getPosition(onSuccess, onError) {
     if (!navigator.geolocation) {
       onError("Browser ini tidak mendukung lokasi GPS.");
@@ -723,10 +724,8 @@
       ? distanceKm(adminLocation, pickupLocation)
       : 0;
 
-    const destinationKm = distanceKm(
-      pickupLocation,
-      destinationLocation
-    );
+    const destinationKm =
+      distanceKm(pickupLocation, destinationLocation);
 
     const adminCost =
       Number(currentRates.admin) +
@@ -807,7 +806,7 @@
     });
   });
 
-  // Buat pesanan.
+  // Membuat pesanan customer.
   $("orderForm").addEventListener("submit", event => {
     event.preventDefault();
 
@@ -905,7 +904,7 @@
     window.open(url, "_blank", "noopener");
   }
 
-  // Informasi admin di tombol lonceng.
+  // Informasi admin pada ikon lonceng.
   function renderAnnouncements() {
     const list = read("aj_announcements", []);
 
@@ -939,16 +938,21 @@
     }
   });
 
-  // Tampilkan panel daftar, login, atau dashboard.
+  // Tahap daftar → login → dashboard admin.
   function renderAdmin() {
     const currentAdmin = admin();
     const loggedIn = sessionStorage.getItem("aj_logged") === "yes";
 
+    // Belum ada akun: tampilkan form daftar.
     $("registerPanel").classList.toggle("hidden", !!currentAdmin);
+
+    // Akun sudah terdaftar dan belum login: tampilkan form login.
     $("loginPanel").classList.toggle(
       "hidden",
       !currentAdmin || loggedIn
     );
+
+    // Login berhasil: tampilkan dashboard admin.
     $("adminDashboard").classList.toggle(
       "hidden",
       !currentAdmin || !loggedIn
@@ -957,7 +961,7 @@
     if (!currentAdmin || !loggedIn) return;
 
     $("adminWelcome").textContent =
-      `Login sebagai ${currentAdmin.name} (${currentAdmin.phone})`;
+      `Selamat datang, ${currentAdmin.name}`;
 
     const currentRates = rates();
     $("rateAdmin").value = currentRates.admin;
@@ -977,12 +981,13 @@
     renderHistory();
   }
 
-  // Daftar admin, menggunakan kode rahasia yang ditentukan.
+  // DAFTAR ADMIN
   $("registerForm").addEventListener("submit", event => {
     event.preventDefault();
 
     if (admin()) {
-      alert("Akun admin sudah terdaftar di browser ini.");
+      alert("Akun admin sudah terdaftar. Silakan login.");
+      renderAdmin();
       return;
     }
 
@@ -998,25 +1003,26 @@
     };
 
     write("aj_admin", newAdmin);
+    $("registerForm").reset();
 
-    $("regPassword").value = "";
-    $("regSecret").value = "";
-
-    alert("Pendaftaran berhasil. Silakan masuk dengan nama dan kata sandi.");
+    alert("Pendaftaran berhasil. Silakan login dengan nama dan kata sandi.");
     renderAdmin();
-    $("loginName").focus();
+
+    $("loginName").value = newAdmin.name;
+    $("loginPassword").focus();
   });
 
-  // Login memakai nama dan kata sandi.
+  // LOGIN: nama dan kata sandi.
   $("loginForm").addEventListener("submit", event => {
     event.preventDefault();
 
     const currentAdmin = admin();
     const enteredName = $("loginName").value.trim().toLowerCase();
+    const savedName = currentAdmin?.name.trim().toLowerCase();
 
     if (
       currentAdmin &&
-      enteredName === currentAdmin.name.trim().toLowerCase() &&
+      enteredName === savedName &&
       $("loginPassword").value === currentAdmin.password
     ) {
       sessionStorage.setItem("aj_logged", "yes");
@@ -1027,8 +1033,10 @@
     }
   });
 
+  // Keluar dari dashboard dan kembali ke form login.
   $("logout").addEventListener("click", () => {
     sessionStorage.removeItem("aj_logged");
+    $("loginForm").reset();
     renderAdmin();
   });
 
@@ -1066,19 +1074,18 @@
     });
   });
 
-  // Kelola pengumuman.
+  // Siarkan, edit, dan hapus informasi.
   $("announcementForm").addEventListener("submit", event => {
     event.preventDefault();
 
     const text = $("announcementText").value.trim();
     const list = read("aj_announcements", []);
-    const action = $("announcementAction").value;
     const announcement = {
       text,
       date: new Date().toLocaleString("id-ID")
     };
 
-    if (action === "edit" && list.length > 0) {
+    if ($("announcementAction").value === "edit" && list.length > 0) {
       list[0] = announcement;
     } else {
       list.unshift(announcement);
@@ -1103,7 +1110,7 @@
     renderAnnouncements();
   });
 
-  // Pengaturan warna.
+  // Atur warna halaman.
   function setColors(background, primary) {
     document.documentElement.style.setProperty("--bg", background);
     document.documentElement.style.setProperty("--primary", primary);
@@ -1135,11 +1142,11 @@
 
     let index = 0;
 
-    const applyNextPalette = () => {
+    function applyNextPalette() {
       const palette = palettes[index % palettes.length];
       setColors(palette[0], palette[1]);
       index++;
-    };
+    }
 
     applyNextPalette();
     autoColorTimer = setInterval(applyNextPalette, 5000);
@@ -1150,7 +1157,7 @@
     setColors(savedColors.bg, savedColors.primary);
   }
 
-  // History pesanan di dashboard admin.
+  // History pesanan di dalam dashboard admin.
   function renderHistory() {
     const list = orders();
 
