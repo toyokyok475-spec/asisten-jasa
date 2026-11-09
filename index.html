@@ -132,7 +132,6 @@
     h1, h2, h3 { margin: 0 0 14px; }
     h1 { font-size: 25px; }
     h2 { font-size: 19px; }
-    h3 { font-size: 16px; }
     p { color: var(--muted); }
 
     .grid {
@@ -312,8 +311,8 @@
       <p>Isi data pesanan dan ambil lokasi penjemputan serta tujuan.</p>
 
       <div class="notice">
-        <strong>Lokasi wajib:</strong> alamat/patokan dan titik GPS penjemputan
-        maupun tujuan harus diisi.
+        <strong>Lokasi wajib:</strong> isi alamat/patokan dan ambil titik GPS
+        untuk penjemputan serta tujuan.
       </div>
 
       <form id="orderForm">
@@ -407,7 +406,7 @@
   <section id="adminView" class="hidden">
     <div class="panel" id="registerPanel">
       <h1>Daftar akun admin</h1>
-      <p>Akun demo disimpan di browser/perangkat yang digunakan.</p>
+      <p>Setelah berhasil daftar, silakan masuk menggunakan nama dan kata sandi.</p>
 
       <form id="registerForm" class="grid">
         <div>
@@ -422,7 +421,8 @@
 
         <div>
           <label for="regPassword">Kata sandi</label>
-          <input id="regPassword" type="password" required minlength="6">
+          <input id="regPassword" type="password" required minlength="6"
+                 autocomplete="new-password">
         </div>
 
         <div>
@@ -439,24 +439,23 @@
 
     <div class="panel hidden" id="loginPanel">
       <h2>Login admin</h2>
+
       <form id="loginForm" class="grid">
         <div>
-          <label for="loginPhone">Nomor handphone</label>
-          <input id="loginPhone" required inputmode="tel">
+          <label for="loginName">Nama admin</label>
+          <input id="loginName" required autocomplete="username">
         </div>
 
         <div>
           <label for="loginPassword">Kata sandi</label>
-          <input id="loginPassword" type="password" required>
+          <input id="loginPassword" type="password" required
+                 autocomplete="current-password">
         </div>
 
         <div class="full">
-          <button class="primary" type="submit">Login</button>
+          <button class="primary" type="submit">Masuk</button>
         </div>
       </form>
-      <p class="hint">
-        Akun pada prototipe ini tersimpan hanya di browser ini, bukan sistem server.
-      </p>
     </div>
 
     <div class="panel hidden" id="adminDashboard">
@@ -494,7 +493,7 @@
 
       <h2>Pengaturan tarif (Rp)</h2>
       <p class="muted">
-        Tarif dasar admin ke customer, tarif perjalanan, dan biaya per kilometer berikutnya.
+        Atur tarif dasar, lalu tekan tombol Simpan pada tiap tarif.
       </p>
 
       <div class="settings-line">
@@ -519,7 +518,7 @@
 
       <h2>Lokasi admin</h2>
       <p class="muted">
-        Opsional. Jika diatur, jarak admin ke lokasi penjemputan ikut diperhitungkan.
+        Opsional. Jika diatur, jarak admin ke penjemputan ikut dihitung.
       </p>
 
       <div class="row">
@@ -550,13 +549,12 @@
           </button>
         </div>
       </div>
-      <p class="hint">Warna otomatis berganti selama halaman ini tetap terbuka.</p>
 
       <hr style="border:0;border-top:1px solid var(--border);margin:22px 0">
 
       <h2>History Pesanan</h2>
       <p class="muted">
-        Perbarui status pesanan, lihat atau cetak struk, dan kirim pesan WhatsApp.
+        Perbarui status, review atau cetak struk, dan hubungi WhatsApp admin.
       </p>
 
       <div class="table-wrap">
@@ -576,6 +574,7 @@
           <tbody id="historyBody"></tbody>
         </table>
       </div>
+
       <div id="emptyHistory" class="muted">Belum ada pesanan.</div>
     </div>
   </section>
@@ -585,7 +584,7 @@
 
 <script>
 (() => {
-  // Untuk demo saja. Kode rahasia di HTML/JavaScript dapat dilihat pengguna.
+  // Kode demo. Rahasia di JavaScript frontend dapat dilihat pengguna.
   const DEFAULT_SECRET_REGISTRATION = "476";
   const MAIN_WA_NUMBER = "628991286742";
 
@@ -630,7 +629,7 @@
   const orders = () => read("aj_orders", []);
   const admin = () => read("aj_admin", null);
 
-  // Waktu dan tanggal real-time.
+  // Tanggal dan jam real-time.
   function updateClock() {
     const now = new Date();
 
@@ -653,7 +652,7 @@
   updateClock();
   setInterval(updateClock, 1000);
 
-  // Navigasi tab.
+  // Navigasi.
   document.querySelectorAll(".tab").forEach(button => {
     button.addEventListener("click", () => {
       document.querySelectorAll(".tab").forEach(tab => {
@@ -674,7 +673,7 @@
     });
   });
 
-  // GPS membutuhkan HTTPS atau localhost.
+  // Ambil lokasi GPS. Memerlukan HTTPS atau localhost.
   function getPosition(onSuccess, onError) {
     if (!navigator.geolocation) {
       onError("Browser ini tidak mendukung lokasi GPS.");
@@ -755,12 +754,10 @@
 
     $("estimate").textContent =
       `Estimasi total: ${rupiah(result.total)} ` +
-      `(jarak perjalanan sekitar ${result.destinationKm.toFixed(1)} km)`;
+      `(jarak GPS sekitar ${result.destinationKm.toFixed(1)} km)`;
   }
 
   function displayMap(mapId, point) {
-    const map = $(mapId);
-
     const padding = 0.01;
     const bbox = [
       point.lon - padding,
@@ -769,6 +766,7 @@
       point.lat + padding
     ].join("%2C");
 
+    const map = $(mapId);
     map.src =
       "https://www.openstreetmap.org/export/embed.html" +
       `?bbox=${bbox}&layer=mapnik` +
@@ -809,7 +807,7 @@
     });
   });
 
-  // Membuat pesanan.
+  // Buat pesanan.
   $("orderForm").addEventListener("submit", event => {
     event.preventDefault();
 
@@ -878,7 +876,7 @@
         ${Number(order.destinationKm).toFixed(1)} km</div>
       <div class="total">Total estimasi: ${rupiah(order.total)}</div>
       <p class="hint">
-        Jarak diukur garis lurus berdasarkan koordinat GPS, bukan rute jalan.
+        Jarak GPS adalah garis lurus, bukan jarak rute jalan.
         Konfirmasi biaya akhir dengan admin.
       </p>
     `;
@@ -907,7 +905,7 @@
     window.open(url, "_blank", "noopener");
   }
 
-  // Pengumuman admin dan tombol lonceng.
+  // Informasi admin di tombol lonceng.
   function renderAnnouncements() {
     const list = read("aj_announcements", []);
 
@@ -941,7 +939,7 @@
     }
   });
 
-  // Dashboard admin.
+  // Tampilkan panel daftar, login, atau dashboard.
   function renderAdmin() {
     const currentAdmin = admin();
     const loggedIn = sessionStorage.getItem("aj_logged") === "yes";
@@ -979,6 +977,7 @@
     renderHistory();
   }
 
+  // Daftar admin, menggunakan kode rahasia yang ditentukan.
   $("registerForm").addEventListener("submit", event => {
     event.preventDefault();
 
@@ -992,30 +991,39 @@
       return;
     }
 
-    write("aj_admin", {
+    const newAdmin = {
       name: $("regName").value.trim(),
       phone: $("regPhone").value.trim(),
       password: $("regPassword").value
-    });
+    };
 
-    alert("Pendaftaran berhasil. Silakan login.");
+    write("aj_admin", newAdmin);
+
+    $("regPassword").value = "";
+    $("regSecret").value = "";
+
+    alert("Pendaftaran berhasil. Silakan masuk dengan nama dan kata sandi.");
     renderAdmin();
+    $("loginName").focus();
   });
 
+  // Login memakai nama dan kata sandi.
   $("loginForm").addEventListener("submit", event => {
     event.preventDefault();
 
     const currentAdmin = admin();
+    const enteredName = $("loginName").value.trim().toLowerCase();
 
     if (
       currentAdmin &&
-      $("loginPhone").value.trim() === currentAdmin.phone &&
+      enteredName === currentAdmin.name.trim().toLowerCase() &&
       $("loginPassword").value === currentAdmin.password
     ) {
       sessionStorage.setItem("aj_logged", "yes");
+      $("loginPassword").value = "";
       renderAdmin();
     } else {
-      alert("Nomor handphone atau kata sandi salah.");
+      alert("Nama admin atau kata sandi salah.");
     }
   });
 
@@ -1024,7 +1032,7 @@
     renderAdmin();
   });
 
-  // Simpan pengaturan tarif.
+  // Pengaturan tarif.
   document.querySelectorAll(".save-rate").forEach(button => {
     button.addEventListener("click", () => {
       const currentRates = rates();
@@ -1058,24 +1066,22 @@
     });
   });
 
-  // Informasi siaran admin.
+  // Kelola pengumuman.
   $("announcementForm").addEventListener("submit", event => {
     event.preventDefault();
 
     const text = $("announcementText").value.trim();
     const list = read("aj_announcements", []);
     const action = $("announcementAction").value;
+    const announcement = {
+      text,
+      date: new Date().toLocaleString("id-ID")
+    };
 
     if (action === "edit" && list.length > 0) {
-      list[0] = {
-        text,
-        date: new Date().toLocaleString("id-ID")
-      };
+      list[0] = announcement;
     } else {
-      list.unshift({
-        text,
-        date: new Date().toLocaleString("id-ID")
-      });
+      list.unshift(announcement);
     }
 
     write("aj_announcements", list);
@@ -1097,7 +1103,7 @@
     renderAnnouncements();
   });
 
-  // Tema dan warna.
+  // Pengaturan warna.
   function setColors(background, primary) {
     document.documentElement.style.setProperty("--bg", background);
     document.documentElement.style.setProperty("--primary", primary);
@@ -1144,7 +1150,7 @@
     setColors(savedColors.bg, savedColors.primary);
   }
 
-  // Tabel history hanya ada di dashboard admin.
+  // History pesanan di dashboard admin.
   function renderHistory() {
     const list = orders();
 
@@ -1200,9 +1206,7 @@
         order.status = select.value;
         write("aj_orders", allOrders);
 
-        if (latestOrderId === order.id) {
-          renderReceipt(order);
-        }
+        if (latestOrderId === order.id) renderReceipt(order);
       });
     });
 
@@ -1248,6 +1252,8 @@
       });
     });
   }
+
+  renderAdmin();
 })();
 </script>
 </body>
